@@ -52,6 +52,8 @@ func loadConfigFromEnv() (cfg config, err error) {
 		}
 	}()
 
+	// TODO: actually read the content of the additionalRobotsFile
+
 	endpoint := cmp.Or(os.Getenv("ENDPOINT"), "robots.txt")
 	cfg.newRobotsEndpoint = endpoint
 
