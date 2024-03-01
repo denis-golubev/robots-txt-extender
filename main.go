@@ -71,20 +71,13 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	rh.logger.Debug("copying original robots.txt to response successful")
 
-	// => double-check that empty lines are not a problem for robots.txt file
-
-	// Errors at this point can't be reflected back to the client (as we have sent headers above already during the
-	// io.Copy call), so we just log them.
-
-	// TODO: make this configurable
-	//_, err = fmt.Fprintln(w, "")
-	//if err != nil {
-	//	rh.logger.Error("failed to write additional robots.txt to response (spacer)", "error", err)
-	//	return
-	//}
-
+	// Note: According to RFC 9309 (https://www.rfc-editor.org/rfc/rfc9309.html#section-2.2), each line must end
+	//       with an EOL. Thus, we can just append the additional robots.txt file to the response. Additional newlines
+	//       (for example to delimit a new group) can then be added by the user directly in the file.
 	_, err = fmt.Fprintln(w, rh.cfg.additionalRobotsFile)
 	if err != nil {
+		// Errors at this point can't be reflected back to the client (as we have sent headers above already during the
+		// io.Copy call), so we just log them.
 		rh.logger.Error("failed to write additional robots.txt to response (additional lines)", "error", err)
 		return
 	}
