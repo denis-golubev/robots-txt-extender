@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"unicode/utf8"
 )
 
 type config struct {
@@ -41,18 +42,16 @@ func loadConfigFromEnv() (cfg config, err error) {
 	}
 
 	additionalRobotsFilePath := cmp.Or(os.Getenv("ADDITIONAL_ROBOTS_FILE"), "additional_robots.txt")
-	additionalRobotsFile, err := os.Open(additionalRobotsFilePath)
-	if err != nil {
-		return cfg, fmt.Errorf("failed to open additional robots file: %w", err)
-	}
-	defer func() {
-		// note: take care to extend this if additional errors can occur after this point
-		if closeErr := additionalRobotsFile.Close(); closeErr != nil {
-			err = fmt.Errorf("failed to close additional robots file: %w", closeErr)
-		}
-	}()
 
-	// TODO: actually read the content of the additionalRobotsFile
+	additionalRobotsFile, err := os.ReadFile(additionalRobotsFilePath)
+	if err != nil {
+		return cfg, fmt.Errorf("failed to read additional robots file: %w", err)
+	}
+
+	if !utf8.Valid(additionalRobotsFile) {
+		return cfg, fmt.Errorf("additional robots file is not valid UTF-8")
+	}
+	cfg.additionalRobotsFile = string(additionalRobotsFile)
 
 	endpoint := cmp.Or(os.Getenv("ENDPOINT"), "robots.txt")
 	cfg.newRobotsEndpoint = endpoint
