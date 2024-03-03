@@ -97,6 +97,7 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		msg := "failed to read original robots.txt response"
 		rh.logger.ErrorContext(r.Context(), msg, "error", err)
 
+		// Note: This may not have any effect if the response has already been started.
 		w.WriteHeader(http.StatusBadGateway)
 		_, _ = fmt.Fprintln(w, msg, ":", err)
 		return
