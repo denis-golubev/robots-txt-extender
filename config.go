@@ -59,6 +59,9 @@ func loadConfigFromEnv() (cfg config, err error) {
 
 	includeOriginalHeaders := cmp.Or(os.Getenv("INCLUDE_ORIGINAL_HEADERS"), "true")
 	cfg.includeOriginalHeaders, err = strconv.ParseBool(includeOriginalHeaders)
+	if err != nil {
+		return cfg, fmt.Errorf("failed to parse \"include original headers\" setting: %w", err)
+	}
 
 	return cfg, nil
 }
