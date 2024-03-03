@@ -32,6 +32,10 @@ func loadConfigFromEnv() (cfg config, err error) {
 	if robotsUrl == "" {
 		return cfg, fmt.Errorf("original robots URL (`ORIGINAL_ROBOTS_URL`) is required")
 	}
+	cfg.originalRobotsURL, err = url.Parse(robotsUrl)
+	if err != nil {
+		return cfg, fmt.Errorf("failed to get original robots URL: %w", err)
+	}
 
 	timeout := cmp.Or(os.Getenv("TIMEOUT_ROBOTS_REQUEST_SECONDS"), "5s")
 	cfg.timeoutRobotsRequest, err = time.ParseDuration(timeout)
@@ -39,13 +43,7 @@ func loadConfigFromEnv() (cfg config, err error) {
 		return cfg, fmt.Errorf("failed to parse timeout seconds: %w", err)
 	}
 
-	cfg.originalRobotsURL, err = url.Parse(robotsUrl)
-	if err != nil {
-		return cfg, fmt.Errorf("failed to get original robots URL: %w", err)
-	}
-
 	additionalRobotsFilePath := cmp.Or(os.Getenv("ADDITIONAL_ROBOTS_FILE"), "additional_robots.txt")
-
 	additionalRobotsFile, err := os.ReadFile(additionalRobotsFilePath)
 	if err != nil {
 		return cfg, fmt.Errorf("failed to read additional robots file: %w", err)
