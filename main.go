@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"log/slog"
+	"maps"
 	"net/http"
 	"os"
 )
@@ -78,7 +79,14 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}(originalRobotsResponse.Body)
 
-	// TODO: check response headers and keep them?
+	if rh.cfg.includeOriginalHeaders {
+		rh.logger.Debug("copying original headers", "headers", originalRobotsResponse.Header)
+
+		maps.Copy(w.Header(), originalRobotsResponse.Header)
+
+		// Note: Content-Length is not copied, as we are adding additional content to the response.
+		w.Header().Del("Content-Length")
+	}
 
 	rh.logger.Debug("copying original robots.txt to response...")
 	// Note: Explicitly not sending 200 OK header here. This is done implicitly if writing

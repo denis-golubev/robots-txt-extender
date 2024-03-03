@@ -11,11 +11,12 @@ import (
 )
 
 type config struct {
-	port                 int
-	originalRobotsURL    *url.URL
-	timeoutRobotsRequest time.Duration
-	additionalRobotsFile string
-	newRobotsEndpoint    string
+	port                   int
+	originalRobotsURL      *url.URL
+	timeoutRobotsRequest   time.Duration
+	additionalRobotsFile   string
+	newRobotsEndpoint      string
+	includeOriginalHeaders bool
 }
 
 func loadConfigFromEnv() (cfg config, err error) {
@@ -55,6 +56,9 @@ func loadConfigFromEnv() (cfg config, err error) {
 
 	endpoint := cmp.Or(os.Getenv("ENDPOINT"), "robots.txt")
 	cfg.newRobotsEndpoint = endpoint
+
+	includeOriginalHeaders := cmp.Or(os.Getenv("INCLUDE_ORIGINAL_HEADERS"), "true")
+	cfg.includeOriginalHeaders, err = strconv.ParseBool(includeOriginalHeaders)
 
 	return cfg, nil
 }
