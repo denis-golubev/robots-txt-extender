@@ -17,6 +17,8 @@
 
 !README.md
 !LICENSE
+!Dockerfile
+!.dockerignore
 
 # Default robots.txt extension file.
 !additional_robots.txt
