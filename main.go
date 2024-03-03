@@ -6,7 +6,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"io"
-	"log"
 	"log/slog"
 	"maps"
 	"net/http"
@@ -46,7 +45,7 @@ func newRobotsHandler(cfg config, logger *slog.Logger) robotsHandler {
 }
 
 func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	rh.logger.Debug("received request")
+	rh.logger.DebugContext(r.Context(), "received request")
 
 	totalRobotsTxtRequests.Inc()
 
@@ -62,7 +61,7 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		totalRobotsTxtRequestErrors.Inc()
 
 		msg := "failed to get original robots.txt"
-		rh.logger.Error(msg, "error", err)
+		rh.logger.ErrorContext(r.Context(), msg, "error", err)
 
 		w.WriteHeader(http.StatusBadGateway)
 		_, _ = fmt.Fprintln(w, msg, ":", err)
@@ -73,14 +72,14 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			totalRobotsTxtRequestErrors.Inc()
 
-			rh.logger.Error("failed to close original robots.txt response body", "error", err)
+			rh.logger.ErrorContext(r.Context(), "failed to close original robots.txt response body", "error", err)
 			// At this point the (error) response may already have been sent, so no response is provided
 			// in case of this error.
 		}
 	}(originalRobotsResponse.Body)
 
 	if rh.cfg.includeOriginalHeaders {
-		rh.logger.Debug("copying original headers", "headers", originalRobotsResponse.Header)
+		rh.logger.DebugContext(r.Context(), "copying original headers", "headers", originalRobotsResponse.Header)
 
 		maps.Copy(w.Header(), originalRobotsResponse.Header)
 
@@ -88,7 +87,7 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Del("Content-Length")
 	}
 
-	rh.logger.Debug("copying original robots.txt to response...")
+	rh.logger.ErrorContext(r.Context(), "copying original robots.txt to response...")
 	// Note: Explicitly not sending 200 OK header here. This is done implicitly if writing
 	//       starts successfully.
 	_, err = io.Copy(w, originalRobotsResponse.Body)
@@ -96,13 +95,13 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		totalRobotsTxtRequestErrors.Inc()
 
 		msg := "failed to read original robots.txt response"
-		rh.logger.Error(msg, "error", err)
+		rh.logger.ErrorContext(r.Context(), msg, "error", err)
 
 		w.WriteHeader(http.StatusBadGateway)
 		_, _ = fmt.Fprintln(w, msg, ":", err)
 		return
 	}
-	rh.logger.Debug("copying original robots.txt to response successful")
+	rh.logger.ErrorContext(r.Context(), "copying original robots.txt to response successful")
 
 	// Note: According to RFC 9309 (https://www.rfc-editor.org/rfc/rfc9309.html#section-2.2), each line must end
 	//       with an EOL. Thus, we can just append the additional robots.txt file to the response. Additional newlines
@@ -113,18 +112,17 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// Errors at this point can't be reflected back to the client (as we have sent headers above already during the
 		// io.Copy call), so we just log them.
-		rh.logger.Error("failed to write additional robots.txt to response (additional lines)", "error", err)
+		rh.logger.ErrorContext(r.Context(), "failed to write additional robots.txt to response (additional lines)", "error", err)
 		return
 	}
 }
 
-func run(logger *slog.Logger) error {
+func run(level *slog.LevelVar, logger *slog.Logger) error {
 	cfg, err := loadConfigFromEnv()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-
-	// TODO: make log level configurable from config
+	level.Set(cfg.logLevel)
 
 	logger.Debug("config loaded",
 		"port", cfg.port,
@@ -132,22 +130,25 @@ func run(logger *slog.Logger) error {
 		"timeoutRobotsRequest", cfg.timeoutRobotsRequest,
 		"additionalRobotsFile", cfg.additionalRobotsFile,
 		"newRobotsEndpoint", cfg.newRobotsEndpoint,
+		"includeOriginalHeaders", cfg.includeOriginalHeaders,
+		"logLevel", cfg.logLevel,
 	)
 
 	http.Handle("/metrics", promhttp.Handler())
 	http.Handle(fmt.Sprintf("/%s", cfg.newRobotsEndpoint), newRobotsHandler(cfg, logger.WithGroup("newRobotsHandler")))
 
-	logger.Info("listening on port", "port", cfg.port)
+	logger.Info("server is listening", "port", cfg.port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", cfg.port), nil)
 }
 
 func main() {
+	loggerLevel := new(slog.LevelVar)
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
+		Level: loggerLevel,
 	}))
-	logger.Info("starting server")
 
-	if err := run(logger.WithGroup("run")); err != nil {
-		log.Fatalln("error:", err)
+	if err := run(loggerLevel, logger); err != nil {
+		logger.Error("failed to run server", "err", err)
+		os.Exit(1)
 	}
 }

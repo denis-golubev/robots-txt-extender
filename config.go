@@ -3,6 +3,7 @@ package main
 import (
 	"cmp"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"strconv"
@@ -17,6 +18,7 @@ type config struct {
 	additionalRobotsFile   string
 	newRobotsEndpoint      string
 	includeOriginalHeaders bool
+	logLevel               slog.Level
 }
 
 func loadConfigFromEnv() (cfg config, err error) {
@@ -61,6 +63,20 @@ func loadConfigFromEnv() (cfg config, err error) {
 	cfg.includeOriginalHeaders, err = strconv.ParseBool(includeOriginalHeaders)
 	if err != nil {
 		return cfg, fmt.Errorf("failed to parse \"include original headers\" setting: %w", err)
+	}
+
+	logLevel := cmp.Or(os.Getenv("LOG_LEVEL"), "info")
+	switch logLevel {
+	case "debug":
+		cfg.logLevel = slog.LevelDebug
+	case "info":
+		cfg.logLevel = slog.LevelInfo
+	case "warn":
+		cfg.logLevel = slog.LevelWarn
+	case "error":
+		cfg.logLevel = slog.LevelError
+	default:
+		return cfg, fmt.Errorf("unknown log level: %s", logLevel)
 	}
 
 	return cfg, nil
