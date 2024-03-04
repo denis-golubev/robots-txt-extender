@@ -34,3 +34,12 @@ The Docker image includes a basic `additional_robots.txt` file with `Disallow: /
 ## Errors
 
 In case of errors with the underlying endpoint, this service will return a `502 Bad Gateway`.
+
+## Metrics
+
+This service provides a `/metrics` endpoint for Prometheus with the following metrics:
+
+| **Metric**                      | **Description**                                                                                                                                                                                                                                                                                    |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| total_robots_txt_requests       | The total number of requests for the robots.txt file provided by this service.                                                                                                                                                                                                                     |
+| total_robots_txt_request_errors | The total number of errors when serving the robots.txt file. The reason for this is mostly the underlying robots.txt not being served properly or network issues. Not all errors may have been reflected back to the client, for example if an error occurred after the response has been started. |
