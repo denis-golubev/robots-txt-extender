@@ -28,6 +28,7 @@ The following configuration is supported via environment variables:
 | `ENDPOINT`                       | The endpoint to host the `robots.txt` file under from the root of the service. In case you need / want to find other ways to host the file.                                                                                                                                  | `robots.txt`            | No           |
 | `INCLUDE_ORIGINAL_HEADERS`       | This allows keeping the original headers the underlying service is using for the `robots.txt` file. The following values are accepted: `1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False`.                                                                            | `true`                  | No           |
 | `LOG_LEVEL`                      | The default log level to use.                                                                                                                                                                                                                                                | `info`                  | No           |
+| `X_FORWARDED_PROTO`              | The value to use as the `X-Forwarded-Proto` header, in case your target service requires it to determine which protocol to use.                                                                                                                                              | -                       | No           |
 
 The Docker image includes a basic `additional_robots.txt` file with `Disallow: /cdn-cgi/`.
 

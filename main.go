@@ -56,6 +56,10 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	originalRobotsRequest = originalRobotsRequest.WithContext(r.Context())
 
+	if rh.cfg.xForwardedProto != nil {
+		originalRobotsRequest.Header.Set("X-Forwarded-Proto", *rh.cfg.xForwardedProto)
+	}
+
 	originalRobotsResponse, err := rh.client.Do(originalRobotsRequest)
 	if err != nil {
 		totalRobotsTxtRequestErrors.Inc()

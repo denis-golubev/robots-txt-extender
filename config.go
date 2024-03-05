@@ -11,6 +11,9 @@ import (
 	"unicode/utf8"
 )
 
+// config contains the configuration for the service.
+// Please refer to the README for more details
+// about the configuration.
 type config struct {
 	port                   int
 	originalRobotsURL      *url.URL
@@ -19,6 +22,7 @@ type config struct {
 	newRobotsEndpoint      string
 	includeOriginalHeaders bool
 	logLevel               slog.Level
+	xForwardedProto        *string
 }
 
 func loadConfigFromEnv() (cfg config, err error) {
@@ -75,6 +79,11 @@ func loadConfigFromEnv() (cfg config, err error) {
 		cfg.logLevel = slog.LevelError
 	default:
 		return cfg, fmt.Errorf("unknown log level: %s", logLevel)
+	}
+
+	xForwardedProto := os.Getenv("X_FORWARDED_PROTO")
+	if xForwardedProto != "" {
+		cfg.xForwardedProto = &xForwardedProto
 	}
 
 	return cfg, nil
