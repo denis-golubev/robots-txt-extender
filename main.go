@@ -64,7 +64,7 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rh.logger.ErrorContext(r.Context(), msg, "error", err)
 
 		w.WriteHeader(http.StatusBadGateway)
-		_, _ = fmt.Fprintln(w, msg, ":", err)
+		_, _ = fmt.Fprintln(w, msg)
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -99,7 +99,7 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// Note: This may not have any effect if the response has already been started.
 		w.WriteHeader(http.StatusBadGateway)
-		_, _ = fmt.Fprintln(w, msg, ":", err)
+		_, _ = fmt.Fprintln(w, msg)
 		return
 	}
 	rh.logger.ErrorContext(r.Context(), "copying original robots.txt to response successful")
