@@ -53,6 +53,7 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Method: http.MethodGet,
 		URL:    rh.cfg.originalRobotsURL,
 		Body:   nil,
+		Header: make(http.Header),
 	}
 	originalRobotsRequest = originalRobotsRequest.WithContext(r.Context())
 
