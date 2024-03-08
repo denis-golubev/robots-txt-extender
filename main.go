@@ -92,7 +92,7 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Del("Content-Length")
 	}
 
-	rh.logger.ErrorContext(r.Context(), "copying original robots.txt to response...")
+	rh.logger.DebugContext(r.Context(), "copying original robots.txt to response...")
 	// Note: Explicitly not sending 200 OK header here. This is done implicitly if writing
 	//       starts successfully.
 	_, err = io.Copy(w, originalRobotsResponse.Body)
@@ -107,7 +107,7 @@ func (rh robotsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintln(w, msg)
 		return
 	}
-	rh.logger.ErrorContext(r.Context(), "copying original robots.txt to response successful")
+	rh.logger.DebugContext(r.Context(), "copying original robots.txt to response successful")
 
 	// Note: According to RFC 9309 (https://www.rfc-editor.org/rfc/rfc9309.html#section-2.2), each line must end
 	//       with an EOL. Thus, we can just append the additional robots.txt file to the response. Additional newlines
